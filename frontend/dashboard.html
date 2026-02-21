@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>لوحة التحكم — مكتب النائب</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            font-size: .8rem;
+        }
+
+        .bar-item .bar-label {
+            width: 120px;
+            color: var(--text-secondary);
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-item .bar-track {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-input);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-item .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #6366f1);
+            border-radius: 4px;
+        }
+
+        .bar-item .bar-count {
+            width: 28px;
+            color: var(--text-secondary);
+            text-align: left;
+            font-size: .75rem;
+        }
+
+        @media(max-width:768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon">🏛️</div>
+                <span>مكتب النائب</span>
+            </div>
+            <div class="sidebar-label">القائمة الرئيسية</div>
+            <a href="dashboard.html" class="sidebar-link active"><span class="icon">📊</span> لوحة التحكم</a>
+            <a href="posts.html" class="sidebar-link"><span class="icon">📋</span> الطلبات</a>
+            <a href="users.html" class="sidebar-link" id="users-link" style="display:none"><span class="icon">👥</span>
+                الموظفون</a>
+            <div class="sidebar-footer">
+                <div id="user-info" style="padding:.75rem;margin-bottom:.5rem"></div>
+                <button class="btn btn-secondary btn-full btn-sm" onclick="auth.logout()">تسجيل الخروج</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>لوحة التحكم</h1>
+                    <p>نظرة عامة على طلبات المواطنين</p>
+                </div>
+                <a href="posts.html" class="btn btn-primary">عرض جميع الطلبات</a>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card" style="animation:none">
+                    <div class="stat-label">إجمالي الطلبات</div>
+                    <div class="stat-value" id="stat-total">—</div>
+                    <div class="stat-icon">📋</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">قيد الانتظار</div>
+                    <div class="stat-value" id="stat-pending">—</div>
+                    <div class="stat-icon">⏳</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">قيد التنفيذ</div>
+                    <div class="stat-value" id="stat-inprogress">—</div>
+                    <div class="stat-icon">⚙️</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">تم الحل</div>
+                    <div class="stat-value" id="stat-resolved">—</div>
+                    <div class="stat-icon">✅</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">هذا الأسبوع</div>
+                    <div class="stat-value" id="stat-week">—</div>
+                    <div class="stat-icon">📅</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">أكثر المدن</div>
+                    </div>
+                    <div class="bar-chart" id="city-chart">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">أنواع المشاكل</div>
+                    </div>
+                    <div class="bar-chart" id="type-chart">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Posts -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">أحدث الطلبات</div>
+                    <a href="posts.html" class="btn btn-secondary btn-sm">عرض الكل</a>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>المواطن</th>
+                                <th>نوع المشكلة</th>
+                                <th>المدينة</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align:center;padding:2rem">
+                                    <div class="spinner"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        auth.guard();
+        auth.renderUserInfo();
+        if (auth.isAdmin()) document.getElementById('users-link').style.display = 'flex';
+
+        async function loadDashboard() {
+            try {
+                const [statsRes, recentRes] = await Promise.all([
+                    api.get('/dashboard/stats'),
+                    api.get('/dashboard/recent'),
+                ]);
+
+                const { totals, by_status, top_cities, top_types } = statsRes.data;
+
+                // Stat cards
+                document.getElementById('stat-total').textContent = totals.total_posts;
+                document.getElementById('stat-week').textContent = totals.posts_this_week;
+
+                const pending = by_status.find(s => s.status === 'Pending');
+                const inProgress = by_status.find(s => s.status === 'In Progress');
+                const resolved = by_status.find(s => s.status === 'Resolved');
+                document.getElementById('stat-pending').textContent = pending?.count || 0;
+                document.getElementById('stat-inprogress').textContent = inProgress?.count || 0;
+                document.getElementById('stat-resolved').textContent = resolved?.count || 0;
+
+                // City chart
+                const maxCity = Math.max(...top_cities.map(c => c.count), 1);
+                document.getElementById('city-chart').innerHTML = top_cities.slice(0, 8).map(c => `
+          <div class="bar-item">
+            <div class="bar-label">${c.city}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(c.count / maxCity) * 100}%"></div></div>
+            <div class="bar-count">${c.count}</div>
+          </div>`).join('') || '<p>لا توجد بيانات</p>';
+
+                // Type chart
+                const maxType = Math.max(...top_types.map(t => t.count), 1);
+                document.getElementById('type-chart').innerHTML = top_types.slice(0, 8).map(t => `
+          <div class="bar-item">
+            <div class="bar-label">${t.problem_type.split(' ')[0]}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(t.count / maxType) * 100}%;background:linear-gradient(90deg,#10b981,#6366f1)"></div></div>
+            <div class="bar-count">${t.count}</div>
+          </div>`).join('') || '<p>لا توجد بيانات</p>';
+
+                // Recent posts table
+                document.getElementById('recent-tbody').innerHTML = recentRes.data.length
+                    ? recentRes.data.map(p => `
+              <tr onclick="window.location='post-detail.html?id=${p.id}'">
+                <td class="primary">#${p.id}</td>
+                <td class="primary">${p.citizen_name}</td>
+                <td>${p.problem_type}</td>
+                <td>${p.city}</td>
+                <td>${statusBadge(p.status)}</td>
+                <td>${formatDate(p.created_at)}</td>
+              </tr>`).join('')
+                    : '<tr><td colspan="6" class="text-center"><div class="empty-state"><div class="icon">📭</div><p>لا توجد طلبات حتى الآن</p></div></td></tr>';
+            } catch (e) {
+                showToast('فشل تحميل البيانات: ' + e.message, 'error');
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>

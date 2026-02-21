@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تفاصيل الطلب — مكتب النائب</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <style>
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1.5rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: .75rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: .875rem;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .attachment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: .75rem;
+        }
+
+        .attachment-item {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            text-align: center;
+            padding: 1.5rem .75rem;
+            font-size: .8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .attachment-item:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .attachment-item .att-icon {
+            font-size: 2rem;
+            margin-bottom: .5rem;
+            display: block;
+        }
+
+        @media(max-width:900px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon">🏛️</div>
+                <span>مكتب النائب</span>
+            </div>
+            <div class="sidebar-label">القائمة الرئيسية</div>
+            <a href="dashboard.html" class="sidebar-link"><span class="icon">📊</span> لوحة التحكم</a>
+            <a href="posts.html" class="sidebar-link active"><span class="icon">📋</span> الطلبات</a>
+            <a href="users.html" class="sidebar-link" id="users-link" style="display:none"><span class="icon">👥</span>
+                الموظفون</a>
+            <div class="sidebar-footer">
+                <div id="user-info" style="padding:.75rem;margin-bottom:.5rem"></div>
+                <button class="btn btn-secondary btn-full btn-sm" onclick="auth.logout()">تسجيل الخروج</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header" style="margin-bottom:1.5rem">
+                <div style="display:flex;align-items:center;gap:1rem">
+                    <a href="posts.html" class="btn btn-secondary btn-sm">← رجوع</a>
+                    <h1 id="page-title">تفاصيل الطلب</h1>
+                    <span id="status-badge"></span>
+                </div>
+            </div>
+            <div id="action-alert"></div>
+
+            <div class="detail-grid">
+                <!-- Left: Main Details -->
+                <div style="display:flex;flex-direction:column;gap:1.5rem">
+                    <!-- Citizen Info -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">بيانات المواطن</div>
+                        </div>
+                        <div class="detail-row"><span class="detail-label">الاسم</span><span class="detail-value"
+                                id="d-name">—</span></div>
+                        <div class="detail-row"><span class="detail-label">الرقم القومي</span><span class="detail-value"
+                                id="d-nid" style="font-family:monospace;font-size:.8rem">—</span></div>
+                        <div class="detail-row"><span class="detail-label">الهاتف</span><span class="detail-value"
+                                id="d-phone">—</span></div>
+                    </div>
+                    <!-- Request Info -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">تفاصيل الطلب</div>
+                        </div>
+                        <div class="detail-row"><span class="detail-label">نوع المشكلة</span><span class="detail-value"
+                                id="d-type">—</span></div>
+                        <div class="detail-row"><span class="detail-label">المدينة</span><span class="detail-value"
+                                id="d-city">—</span></div>
+                        <div class="detail-row"><span class="detail-label">تاريخ التقديم</span><span
+                                class="detail-value" id="d-date">—</span></div>
+                        <hr class="divider" />
+                        <div style="font-size:.875rem;color:var(--text-secondary);line-height:1.8" id="d-desc">—</div>
+                    </div>
+                    <!-- Attachments -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">المرفقات</div>
+                            <span id="att-count" class="badge badge-pending" style="display:none"></span>
+                        </div>
+                        <div class="attachment-grid" id="attachments-grid">
+                            <p style="color:var(--text-muted);font-size:.875rem">لا توجد مرفقات</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Actions Panel -->
+                <div style="display:flex;flex-direction:column;gap:1.5rem">
+                    <!-- Update Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">تحديث الحالة</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">الحالة الجديدة</label>
+                            <select id="new-status" class="form-control"></select>
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="updateStatus()">حفظ الحالة</button>
+                    </div>
+
+                    <!-- Assign -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">تعيين مسؤول</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">الموظف المسؤول</label>
+                            <select id="assign-user" class="form-control">
+                                <option value="">بدون تعيين</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-full" onclick="assignPost()">تعيين</button>
+                    </div>
+
+                    <!-- Delete (admin only) -->
+                    <div id="admin-actions" style="display:none">
+                        <button class="btn btn-danger btn-full" onclick="deletePost()">🗑️ حذف هذا الطلب</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        auth.guard();
+        auth.renderUserInfo();
+        if (auth.isAdmin()) { document.getElementById('users-link').style.display = 'flex'; document.getElementById('admin-actions').style.display = 'block'; }
+
+        const postId = new URLSearchParams(window.location.search).get('id');
+        if (!postId) window.location.href = 'posts.html';
+
+        async function loadPost() {
+            try {
+                const [postRes, statusRes, usersRes] = await Promise.all([
+                    api.get(`/posts/${postId}`),
+                    api.get('/statuses'),
+                    auth.isAdmin() ? api.get('/users') : Promise.resolve({ data: [] }),
+                ]);
+
+                const p = postRes.data;
+                document.getElementById('page-title').textContent = `طلب #${p.id}`;
+                document.getElementById('status-badge').innerHTML = statusBadge(p.status_name);
+                document.getElementById('d-name').textContent = `${p.first_name} ${p.last_name}`;
+                document.getElementById('d-nid').textContent = p.national_id;
+                document.getElementById('d-phone').textContent = p.phone || '—';
+                document.getElementById('d-type').textContent = p.problem_type;
+                document.getElementById('d-city').textContent = p.city;
+                document.getElementById('d-date').textContent = formatDate(p.created_at);
+                document.getElementById('d-desc').textContent = p.problem_description;
+
+                // Status select
+                const statusSel = document.getElementById('new-status');
+                statusRes.data.forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id; o.textContent = s.name;
+                    if (s.name === p.status_name) o.selected = true;
+                    statusSel.appendChild(o);
+                });
+
+                // Assign select
+                const assignSel = document.getElementById('assign-user');
+                usersRes.data.forEach(u => {
+                    const o = document.createElement('option');
+                    o.value = u.id; o.textContent = u.username;
+                    if (u.id === p.assigned_user_id) o.selected = true;
+                    assignSel.appendChild(o);
+                });
+
+                // Attachments
+                if (p.attachments && p.attachments.length > 0) {
+                    document.getElementById('att-count').style.display = 'inline-flex';
+                    document.getElementById('att-count').textContent = p.attachments.length + ' ملف';
+                    document.getElementById('attachments-grid').innerHTML = p.attachments.map(a => {
+                        const isImage = a.file_type && a.file_type.startsWith('image/');
+                        return `
+              <div class="attachment-item" onclick="window.open('${a.file_url}','_blank')">
+                <span class="att-icon">${isImage ? '🖼️' : '📄'}</span>
+                <div>${a.file_type?.split('/')[1]?.toUpperCase() || 'FILE'}</div>
+                <div style="font-size:.7rem;margin-top:.25rem;color:var(--text-muted)">${formatDate(a.uploaded_at)}</div>
+              </div>`;
+                    }).join('');
+                }
+            } catch (e) { showToast('فشل تحميل الطلب: ' + e.message, 'error'); }
+        }
+
+        async function updateStatus() {
+            const statusId = document.getElementById('new-status').value;
+            try {
+                await api.patch(`/posts/${postId}/status`, { status_id: parseInt(statusId) });
+                showToast('تم تحديث الحالة ✓', 'success');
+                loadPost();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function assignPost() {
+            const userId = document.getElementById('assign-user').value;
+            try {
+                await api.patch(`/posts/${postId}/assign`, { assigned_to: userId ? parseInt(userId) : null });
+                showToast('تم التعيين ✓', 'success');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function deletePost() {
+            if (!confirm('هل أنت متأكد من حذف هذا الطلب؟ لا يمكن التراجع.')) return;
+            try {
+                await api.delete(`/posts/${postId}`);
+                showToast('تم الحذف', 'success');
+                setTimeout(() => window.location.href = 'posts.html', 1000);
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        loadPost();
+    </script>
+</body>
+
+</html>

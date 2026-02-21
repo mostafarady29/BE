@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تسجيل الدخول — لوحة التحكم</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(160deg, #eef2ff 0%, #f0f4f8 60%);
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 1rem;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo .icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 0 40px var(--accent-glow);
+        }
+
+        .login-card {
+            padding: 2.5rem;
+        }
+
+        .login-card h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .login-card p {
+            margin-bottom: 2rem;
+            font-size: .875rem;
+        }
+
+        .forgot-link {
+            font-size: .8rem;
+            color: var(--text-muted);
+            float: left;
+            margin-top: -0.25rem;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: .875rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-wrapper">
+        <div class="login-logo">
+            <div class="icon">🏛️</div>
+        </div>
+        <div class="card login-card">
+            <h2>دخول موظفي المكتب</h2>
+            <p>أدخل بياناتك للوصول إلى لوحة التحكم</p>
+
+            <div id="login-alert"></div>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">اسم المستخدم</label>
+                    <input id="username" class="form-control" placeholder="username" autocomplete="username" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">كلمة المرور</label>
+                    <input id="password" class="form-control" type="password" placeholder="••••••••"
+                        autocomplete="current-password" required />
+                </div>
+                <button class="btn btn-primary btn-full btn-lg" type="submit" id="login-btn">
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+        <div class="back-link">
+            <a href="index.html">← العودة للموقع العام</a>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        auth.redirectIfLoggedIn();
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('login-btn');
+
+            btn.disabled = true; btn.textContent = 'جارٍ التحقق...';
+            document.getElementById('login-alert').innerHTML = '';
+
+            try {
+                const res = await api.post('/auth/login', { username, password });
+                auth.save(res.token, res.user);
+                // Check for redirect param
+                const params = new URLSearchParams(window.location.search);
+                const redirect = params.get('redirect') || '/dashboard.html';
+                window.location.href = redirect;
+            } catch (e) {
+                document.getElementById('login-alert').innerHTML =
+                    `<div class="alert alert-error">❌ ${e.message}</div>`;
+                btn.disabled = false; btn.textContent = 'تسجيل الدخول';
+            }
+        }
+    </script>
+</body>
+
+</html>

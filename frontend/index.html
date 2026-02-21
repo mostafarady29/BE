@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تقديم طلب — منظومة طلبات المواطنين</title>
+    <meta name="description" content="قدّم طلبك أو شكواك لمكتب النائب بسهولة ويسر" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <style>
+        body {
+            background: linear-gradient(160deg, #eef2ff 0%, #f0f4f8 60%);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3.5rem 1rem 2rem;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--accent-light);
+            color: var(--accent);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 100px;
+            padding: 0.375rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero h1 {
+            margin-bottom: 0.75rem;
+        }
+
+        .hero p {
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+
+        .form-card {
+            max-width: 680px;
+            margin: 0 auto 4rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .step.active .step-num {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .step.done .step-num {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        .step-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .step.active .step-label {
+            color: var(--accent);
+        }
+
+        .step-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+            margin: 0 0.5rem;
+        }
+
+        #section-citizen,
+        #section-request,
+        #section-files,
+        #section-success {
+            display: none;
+        }
+
+        #section-citizen {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .file-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.625rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .file-list-item .remove-file {
+            cursor: pointer;
+            color: var(--danger);
+            background: none;
+            border: none;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <div class="navbar-brand">
+                <div class="logo-icon">🏛️</div>
+                <span>مكتب النائب</span>
+            </div>
+            <nav class="navbar-nav">
+                <a href="index.html" class="nav-link active">تقديم طلب</a>
+                <a href="track.html" class="nav-link">تتبع الطلب</a>
+                <a href="login.html" class="nav-link">دخول الموظفين</a>
+            </nav>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-badge">🏛️ مكتب خدمة المواطنين</div>
+            <h1>قدّم طلبك أو شكواك</h1>
+            <p>نحن هنا لخدمتك. أدخل بياناتك وسنتابع طلبك بأسرع وقت ممكن.</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card form-card">
+            <!-- Steps -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <div class="step-num">١</div>
+                    <div class="step-label">بيانات المواطن</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step2">
+                    <div class="step-num">٢</div>
+                    <div class="step-label">تفاصيل الطلب</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" id="step3">
+                    <div class="step-num">٣</div>
+                    <div class="step-label">المرفقات</div>
+                </div>
+            </div>
+
+            <div id="alert-box"></div>
+
+            <!-- Step 1: Citizen Info -->
+            <div id="section-citizen">
+                <h3 style="margin-bottom:1.5rem">بيانات المواطن</h3>
+                <div class="form-group">
+                    <label class="form-label">الرقم القومي *</label>
+                    <div style="display:flex;gap:.75rem">
+                        <input id="national_id" class="form-control" placeholder="أدخل الرقم القومي (14 رقم)"
+                            maxlength="14" />
+                        <button class="btn btn-secondary" onclick="lookupCitizen()" id="lookup-btn">تحقق</button>
+                    </div>
+                    <span class="form-hint">سيتم التحقق تلقائياً إذا كنت مسجلاً مسبقاً</span>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">الاسم الأول *</label>
+                        <input id="first_name" class="form-control" placeholder="الاسم الأول" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">اسم العائلة *</label>
+                        <input id="last_name" class="form-control" placeholder="اسم العائلة" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رقم الهاتف</label>
+                    <input id="phone" class="form-control" placeholder="01XXXXXXXXX" type="tel" />
+                </div>
+                <button class="btn btn-primary btn-full" onclick="goToStep2()">التالي &larr;</button>
+            </div>
+
+            <!-- Step 2: Request Details -->
+            <div id="section-request">
+                <h3 style="margin-bottom:1.5rem">تفاصيل الطلب أو الشكوى</h3>
+                <div class="form-group">
+                    <label class="form-label">نوع المشكلة *</label>
+                    <select id="problem_type" class="form-control">
+                        <option value="">اختر نوع الطلب...</option>
+                        <option>بنية تحتية (طرق - مياه - كهرباء)</option>
+                        <option>الخدمات الصحية</option>
+                        <option>التعليم</option>
+                        <option>الإسكان والتعمير</option>
+                        <option>التوظيف والعمل</option>
+                        <option>الأمن والنظام العام</option>
+                        <option>الخدمات الحكومية</option>
+                        <option>أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المدينة / المنطقة *</label>
+                    <input id="city" class="form-control" placeholder="مثال: القاهرة، الإسكندرية، الجيزة..." />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">وصف المشكلة بالتفصيل * <span class="form-hint">(20 حرف على
+                            الأقل)</span></label>
+                    <textarea id="problem_description" class="form-control" placeholder="اشرح مشكلتك بالتفصيل..."
+                        rows="5"></textarea>
+                    <span id="desc-count" class="form-hint">0 حرف</span>
+                </div>
+                <div style="display:flex;gap:.75rem">
+                    <button class="btn btn-secondary" onclick="goToStep(1)">← السابق</button>
+                    <button class="btn btn-primary" style="flex:1" onclick="submitRequest()">تقديم الطلب &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Files (shown after submit) -->
+            <div id="section-files">
+                <div class="alert alert-success">✅ تم تقديم طلبك بنجاح! رقم طلبك: <strong id="post-id-display"></strong>
+                </div>
+                <h3 style="margin-bottom:1rem">إضافة مرفقات (اختياري)</h3>
+                <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+                    <div style="font-size:2rem">📎</div>
+                    <p>اضغط لإضافة ملفات أو اسحبها هنا</p>
+                    <p style="font-size:.775rem;color:var(--text-muted)">يُقبل: صور (JPG, PNG) · PDF · Word — الحد
+                        الأقصى 10 MB لكل ملف</p>
+                </div>
+                <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx"
+                    style="display:none" />
+                <div id="file-list"></div>
+                <div style="margin-top:1.25rem;display:flex;gap:.75rem">
+                    <button class="btn btn-secondary" id="skip-btn" onclick="showSuccess()">تخطي</button>
+                    <button class="btn btn-primary" style="flex:1" id="upload-btn" onclick="uploadFiles()" disabled>رفع
+                        الملفات</button>
+                </div>
+            </div>
+
+            <!-- Success -->
+            <div id="section-success" style="text-align:center;padding:2rem 0">
+                <div class="success-icon">🎉</div>
+                <h2>طلبك وصلنا بنجاح!</h2>
+                <p style="margin:1rem 0">احتفظ برقم طلبك لمتابعته لاحقاً</p>
+                <div class="card" style="display:inline-block;padding:1rem 2rem;margin:1rem 0">
+                    <div class="stat-label">رقم طلبك</div>
+                    <div class="stat-value" id="final-post-id">—</div>
+                </div>
+                <div style="margin-top:1.5rem;display:flex;gap:.75rem;justify-content:center">
+                    <a href="track.html" class="btn btn-secondary">تتبع طلبك</a>
+                    <a href="index.html" class="btn btn-primary">تقديم طلب جديد</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script>
+        let currentPostId = null;
+        let selectedFiles = [];
+
+        // Char counter
+        document.getElementById('problem_description').addEventListener('input', function () {
+            document.getElementById('desc-count').textContent = this.value.length + ' حرف';
+        });
+
+        // File input change
+        document.getElementById('file-input').addEventListener('change', function () {
+            selectedFiles = Array.from(this.files);
+            renderFileList();
+            document.getElementById('upload-btn').disabled = selectedFiles.length === 0;
+        });
+
+        // Drag & drop
+        const zone = document.getElementById('upload-zone');
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragging'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault(); zone.classList.remove('dragging');
+            selectedFiles = Array.from(e.dataTransfer.files);
+            renderFileList();
+            document.getElementById('upload-btn').disabled = selectedFiles.length === 0;
+        });
+
+        function renderFileList() {
+            const list = document.getElementById('file-list');
+            list.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-list-item">
+          <span>📄 ${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</span>
+          <button class="remove-file" onclick="removeFile(${i})">✕</button>
+        </div>`).join('');
+        }
+
+        function removeFile(i) {
+            selectedFiles.splice(i, 1);
+            renderFileList();
+            document.getElementById('upload-btn').disabled = selectedFiles.length === 0;
+        }
+
+        async function lookupCitizen() {
+            const nid = document.getElementById('national_id').value.trim();
+            if (nid.length < 14) return showAlert('أدخل رقم قومي صحيح (14 رقم)', 'error');
+            try {
+                const res = await api.post('/citizens/lookup', { national_id: nid });
+                if (res.found && res.data) {
+                    document.getElementById('first_name').value = res.data.first_name;
+                    document.getElementById('last_name').value = res.data.last_name;
+                    document.getElementById('phone').value = res.data.phone || '';
+                    showAlert('تم العثور على بياناتك ✓', 'success');
+                } else {
+                    showAlert('لم يتم العثور على بياناتك. يرجى إدخال اسمك.', 'warning');
+                }
+            } catch (e) { showAlert(e.message, 'error'); }
+        }
+
+        function goToStep2() {
+            const nid = document.getElementById('national_id').value.trim();
+            const fname = document.getElementById('first_name').value.trim();
+            const lname = document.getElementById('last_name').value.trim();
+            if (!nid || nid.length < 14) return showAlert('أدخل رقم قومي صحيح', 'error');
+            if (!fname || !lname) return showAlert('يرجى إدخال الاسم الأول والأخير', 'error');
+            goToStep(2);
+        }
+
+        function goToStep(n) {
+            ['section-citizen', 'section-request', 'section-files', 'section-success'].forEach((id, i) => {
+                document.getElementById(id).style.display = (i === n - 1) ? 'block' : 'none';
+            });
+            ['step1', 'step2', 'step3'].forEach((id, i) => {
+                const el = document.getElementById(id);
+                el.classList.toggle('active', i === n - 1);
+                el.classList.toggle('done', i < n - 1);
+            });
+            document.getElementById('alert-box').innerHTML = '';
+        }
+
+        async function submitRequest() {
+            const payload = {
+                national_id: document.getElementById('national_id').value.trim(),
+                first_name: document.getElementById('first_name').value.trim(),
+                last_name: document.getElementById('last_name').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                problem_type: document.getElementById('problem_type').value,
+                problem_description: document.getElementById('problem_description').value.trim(),
+                city: document.getElementById('city').value.trim(),
+            };
+            if (!payload.problem_type) return showAlert('اختر نوع المشكلة', 'error');
+            if (!payload.city) return showAlert('أدخل المدينة', 'error');
+            if (payload.problem_description.length < 20) return showAlert('اكتب وصفاً أطول (20 حرف على الأقل)', 'error');
+            try {
+                const btn = document.querySelector('#section-request .btn-primary');
+                btn.disabled = true; btn.textContent = 'جارٍ الإرسال...';
+                const res = await api.post('/posts', payload);
+                currentPostId = res.data.post_id;
+                document.getElementById('post-id-display').textContent = currentPostId;
+                document.getElementById('final-post-id').textContent = currentPostId;
+                goToStep(3);
+            } catch (e) {
+                showAlert(e.message, 'error');
+                const btn = document.querySelector('#section-request .btn-primary');
+                btn.disabled = false; btn.textContent = 'تقديم الطلب ←';
+            }
+        }
+
+        async function uploadFiles() {
+            if (!currentPostId || selectedFiles.length === 0) return;
+            const btn = document.getElementById('upload-btn');
+            btn.disabled = true; btn.textContent = 'جارٍ الرفع...';
+
+            const MIME_MAP = {
+                'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+                'webp': 'image/webp', 'gif': 'image/gif', 'pdf': 'application/pdf',
+                'doc': 'application/msword',
+                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            };
+
+            let successCount = 0;
+            for (const file of selectedFiles) {
+                try {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    const contentType = MIME_MAP[ext] || file.type;
+                    // 1. Get presigned URL
+                    const presignRes = await api.post(`/posts/${currentPostId}/attachments/presign`, {
+                        file_name: file.name, content_type: contentType,
+                    });
+                    // 2. Upload directly to S3
+                    await fetch(presignRes.data.uploadUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': contentType },
+                        body: file,
+                    });
+                    successCount++;
+                } catch (e) { console.error('Upload error:', e); }
+            }
+
+            if (successCount > 0) showToast(`تم رفع ${successCount} ملف بنجاح`, 'success');
+            showSuccess();
+        }
+
+        function showSuccess() {
+            document.getElementById('section-files').style.display = 'none';
+            document.getElementById('section-success').style.display = 'block';
+        }
+
+        function showAlert(msg, type = 'error') {
+            const cls = type === 'success' ? 'alert-success' : type === 'warning' ? 'alert-warning' : 'alert-error';
+            document.getElementById('alert-box').innerHTML = `<div class="alert ${cls}">${msg}</div>`;
+        }
+    </script>
+</body>
+
+</html>

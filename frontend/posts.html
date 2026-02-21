@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>الطلبات — مكتب النائب</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+
+<body>
+    <div class="layout-dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon">🏛️</div>
+                <span>مكتب النائب</span>
+            </div>
+            <div class="sidebar-label">القائمة الرئيسية</div>
+            <a href="dashboard.html" class="sidebar-link"><span class="icon">📊</span> لوحة التحكم</a>
+            <a href="posts.html" class="sidebar-link active"><span class="icon">📋</span> الطلبات</a>
+            <a href="users.html" class="sidebar-link" id="users-link" style="display:none"><span class="icon">👥</span>
+                الموظفون</a>
+            <div class="sidebar-footer">
+                <div id="user-info" style="padding:.75rem;margin-bottom:.5rem"></div>
+                <button class="btn btn-secondary btn-full btn-sm" onclick="auth.logout()">تسجيل الخروج</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>الطلبات والشكاوى</h1>
+                    <p id="total-label">جميع الطلبات</p>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-bar">
+                <select id="f-status" class="form-control" onchange="loadPosts(1)" style="min-width:130px">
+                    <option value="">كل الحالات</option>
+                </select>
+                <input id="f-city" class="form-control" placeholder="البحث بالمدينة" oninput="debounceLoad()"
+                    style="min-width:150px" />
+                <input id="f-type" class="form-control" placeholder="نوع المشكلة" oninput="debounceLoad()"
+                    style="min-width:150px" />
+                <button class="btn btn-secondary btn-sm" onclick="clearFilters()">مسح الفلاتر</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المواطن</th>
+                            <th>الرقم القومي</th>
+                            <th>نوع المشكلة</th>
+                            <th>المدينة</th>
+                            <th>الحالة</th>
+                            <th>المسؤول</th>
+                            <th>التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="posts-tbody">
+                        <tr>
+                            <td colspan="8" style="text-align:center;padding:3rem">
+                                <div class="spinner"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination" id="pagination"></div>
+        </main>
+    </div>
+
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        auth.guard();
+        auth.renderUserInfo();
+        if (auth.isAdmin()) document.getElementById('users-link').style.display = 'flex';
+
+        let debounceTimer;
+        function debounceLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => loadPosts(1), 500); }
+        function clearFilters() {
+            ['f-status', 'f-city', 'f-type'].forEach(id => document.getElementById(id).value = '');
+            loadPosts(1);
+        }
+
+        async function loadStatuses() {
+            const res = await api.get('/statuses');
+            const sel = document.getElementById('f-status');
+            res.data.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); });
+        }
+
+        async function loadPosts(page = 1) {
+            const status = document.getElementById('f-status').value;
+            const city = document.getElementById('f-city').value.trim();
+            const type = document.getElementById('f-type').value.trim();
+
+            const params = new URLSearchParams({ page, limit: 20 });
+            if (status) params.set('status_id', status);
+            if (city) params.set('city', city);
+            if (type) params.set('problem_type', type);
+
+            try {
+                const res = await api.get(`/posts?${params}`);
+                document.getElementById('total-label').textContent = `إجمالي: ${res.total} طلب`;
+
+                document.getElementById('posts-tbody').innerHTML = res.data.length
+                    ? res.data.map(p => `
+              <tr onclick="window.location='post-detail.html?id=${p.id}'">
+                <td class="primary">#${p.id}</td>
+                <td class="primary">${p.citizen_name}</td>
+                <td style="font-family:monospace;font-size:.8rem">${p.national_id}</td>
+                <td>${p.problem_type}</td>
+                <td>${p.city}</td>
+                <td>${statusBadge(p.status)}</td>
+                <td>${p.assigned_to || '<span style="color:var(--text-muted)">—</span>'}</td>
+                <td>${formatDate(p.created_at)}</td>
+              </tr>`).join('')
+                    : '<tr><td colspan="8"><div class="empty-state"><div class="icon">📭</div><p>لا توجد طلبات تطابق البحث</p></div></td></tr>';
+
+                renderPagination(page, Math.ceil(res.total / 20));
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function renderPagination(current, total) {
+            const el = document.getElementById('pagination');
+            if (total <= 1) { el.innerHTML = ''; return; }
+            let html = `<button class="page-btn" onclick="loadPosts(${current - 1})" ${current === 1 ? 'disabled' : ''}>‹</button>`;
+            for (let i = 1; i <= Math.min(total, 7); i++) {
+                html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="loadPosts(${i})">${i}</button>`;
+            }
+            html += `<button class="page-btn" onclick="loadPosts(${current + 1})" ${current === total ? 'disabled' : ''}>›</button>`;
+            el.innerHTML = html;
+        }
+
+        loadStatuses().then(() => loadPosts(1));
+    </script>
+</body>
+
+</html>
