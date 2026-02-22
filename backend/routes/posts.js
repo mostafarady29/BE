@@ -4,6 +4,13 @@ const { body } = require('express-validator');
 const { authenticateToken } = require('../middleware/auth');
 const { requireRole } = require('../middleware/role');
 const ctrl = require('../controllers/postsController');
+const rateLimit = require('express-rate-limit');
+
+const submitLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10,
+    message: { success: false, message: 'Too many submissions. Please wait before submitting again.' },
+});
 
 const submitValidation = [
     body('national_id').trim().notEmpty().withMessage('National ID is required'),
@@ -15,7 +22,11 @@ const submitValidation = [
 ];
 
 // Public: submit a new request
-router.post('/', submitValidation, ctrl.submit);
+router.post('/', submitLimiter, submitValidation, ctrl.submit);
+
+// Public: track a request by national_id + post_id
+router.post('/track', submitLimiter, ctrl.track);
+
 
 // Protected: list, detail, update status, assign, delete
 router.get('/', authenticateToken, ctrl.list);

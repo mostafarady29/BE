@@ -166,4 +166,33 @@ const remove = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-module.exports = { submit, list, getById, updateStatus, assign, remove };
+// ─── Public track by national_id + post_id ──────────────────────────────────
+const track = async (req, res, next) => {
+    try {
+        const { national_id, post_id } = req.body;
+        if (!national_id || !post_id) {
+            return res.status(400).json({ success: false, message: 'national_id and post_id are required.' });
+        }
+
+        const { rows } = await db.query(
+            `SELECT p.id, p.problem_type, p.problem_description, p.city, p.created_at,
+                    s.name AS status_name,
+                    u.username AS assigned_username,
+                    pe.national_id
+             FROM posts p
+             JOIN people pe ON pe.id = p.person_id
+             JOIN statuses s ON s.id = p.status_id
+             LEFT JOIN users u ON u.id = p.assigned_to
+             WHERE p.id = $1 AND pe.national_id = $2`,
+            [post_id, national_id.trim()]
+        );
+
+        if (!rows.length) {
+            return res.status(404).json({ success: false, message: 'لم يتم العثور على الطلب. تأكد من صحة الرقم القومي ورقم الطلب.' });
+        }
+
+        res.json({ success: true, data: rows[0] });
+    } catch (err) { next(err); }
+};
+
+module.exports = { submit, track, list, getById, updateStatus, assign, remove };

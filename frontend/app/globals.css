@@ -1,0 +1,206 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@config "../tailwind.config.ts";
+
+/* ─── Color variables — keep in sync with @/constants/colors ─── */
+:root {
+  --color-navy: #071a42;
+  --color-blue: #1e6fa8;
+  --color-blue-light: #4da3d4;
+  --color-blue-faint: #ebf4fa;
+  --color-crimson: #8b1a2e;
+  --color-surface: #f3f8fb;
+  --color-border: #c5dff0;
+  --color-border-light: #e5f0f8;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+}
+
+/* ─── Complex utilities ─── */
+@layer utilities {
+  /* Gradient text */
+  .text-gradient-blue {
+    background: linear-gradient(
+      135deg,
+      var(--color-blue),
+      var(--color-blue-light)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+  }
+
+  /* Pentagon clip used in Navbar / Hero decorative elements */
+  .clip-pentagon {
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  }
+
+  /* Diagonal left panel clip in Hero */
+  .clip-hero-panel {
+    clip-path: polygon(0 0, 88% 0, 100% 100%, 0 100%);
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-blue {
+    background: linear-gradient(
+      135deg,
+      var(--color-blue),
+      var(--color-blue-light)
+    );
+  }
+  .bg-gradient-blue-crimson {
+    background: linear-gradient(
+      135deg,
+      var(--color-blue) 0%,
+      var(--color-crimson) 100%
+    );
+  }
+  .bg-gradient-crimson-navy {
+    background: linear-gradient(135deg, var(--color-crimson), #071a42);
+  }
+  .bg-gradient-hero-panel {
+    background: linear-gradient(
+      160deg,
+      var(--color-blue-faint) 0%,
+      var(--color-surface) 100%
+    );
+  }
+  .bg-gradient-section-top {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-border),
+      transparent
+    );
+  }
+
+  /* Box shadows */
+  .shadow-blue-sm {
+    box-shadow: 0 2px 6px rgba(30, 111, 168, 0.08);
+  }
+  .shadow-blue-md {
+    box-shadow: 0 6px 20px rgba(13, 46, 110, 0.25);
+  }
+  .shadow-blue-lg {
+    box-shadow: 0 10px 28px rgba(13, 46, 110, 0.35);
+  }
+  .shadow-blue-xl {
+    box-shadow: 0 12px 36px rgba(30, 111, 168, 0.1);
+  }
+  .shadow-blue-form {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 8px 32px rgba(30, 111, 168, 0.1);
+  }
+  .shadow-success {
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  }
+
+  /* Fluid / clamp type sizes */
+  .text-hero {
+    font-size: clamp(3rem, 5vw, 4.2rem);
+  }
+  .text-section {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+  }
+  .text-form-title {
+    font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  }
+}
+
+/* ─── Card right-bar animation ─── */
+.card-bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    to bottom,
+    var(--color-blue),
+    var(--color-crimson)
+  );
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.3s ease;
+}
+.group:hover .card-bar {
+  transform: scaleY(1);
+}
+
+/* ─── Navbar underline animation ─── */
+.nav-underline {
+  position: absolute;
+  bottom: 0;
+  right: 1.1rem;
+  left: 1.1rem;
+  height: 2px;
+  background: var(--color-blue);
+  border-radius: 1px;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.25s ease;
+}
+.nav-link:hover .nav-underline {
+  transform: scaleX(1);
+}
+.nav-link:hover {
+  color: var(--color-blue);
+}
+
+/* ─── Input focus ring ─── */
+.form-input:focus {
+  border-color: var(--color-blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(30, 111, 168, 0.13);
+  outline: none;
+}
+.form-input.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+/* ─── File drop zone ─── */
+.file-zone:hover {
+  border-color: var(--color-blue);
+  background: rgba(30, 111, 168, 0.04);
+}
+
+/* ─── Footer links ─── */
+.footer-link {
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.2s;
+}
+.footer-link:hover {
+  color: #fff;
+}
+
+/* ─── Submit button ─── */
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(30, 111, 168, 0.4);
+}
+
+/* ─── Hero CTA primary ─── */
+.hero-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(13, 46, 110, 0.35);
+}
+
+/* ─── Navbar CTA ─── */
+.navbar-cta:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ─── Hero outline button ─── */
+.hero-btn-outline:hover {
+  background: var(--color-blue);
+  color: #fff;
+}

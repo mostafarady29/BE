@@ -24,8 +24,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (e.g., curl, Postman, same-origin file)
-        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        // Allow requests with no origin (curl, Postman) OR from file:// (origin === 'null' string)
+        if (!origin || origin === 'null' || allowedOrigins.includes(origin)) return callback(null, true);
         callback(new Error('Not allowed by CORS'));
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -42,12 +42,7 @@ app.use('/api', rateLimit({
     message: { success: false, message: 'Too many requests, please try again later.' },
 }));
 
-// ─── Stricter Rate Limit for Submit ──────────────────────────────────────────
-const submitLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10,
-    message: { success: false, message: 'Too many submissions. Please wait before submitting again.' },
-});
+
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
@@ -63,7 +58,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/citizens', citizensRoutes);
 app.use('/api/statuses', statusesRoutes);
-app.use('/api/posts', submitLimiter, postsRoutes);
+app.use('/api/posts', postsRoutes);
 app.use('/api', attachmentsRoutes);  // /api/posts/:id/attachments & /api/attachments/:id
 app.use('/api/dashboard', dashboardRoutes);
 
