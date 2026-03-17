@@ -1,18 +1,41 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { Card } from "./Card";
 
-interface NewsCardProps {
-  tag: string;
+interface NewsCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  tag: string | null;
   title: string;
   desc: string;
   date: string;
+  image_url?: string | null; // 👈 new prop
+  onReadMore: () => void;
 }
 
-export const NewsCard = ({ tag, title, desc, date }: NewsCardProps) => (
-  <Card dark>
-    {/* Tag */}
+export const NewsCard = ({
+  tag,
+  title,
+  desc,
+  date,
+  image_url,
+  onReadMore,
+  ...rest
+}: NewsCardProps) => (
+  <Card dark {...rest}>
+    {/* Optional image */}
+    {image_url && (
+      <div className="mb-4 -mt-2 -mx-2 rounded-t-2xl overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <Image
+          width={400}
+          height={240}
+          src={image_url}
+          alt={title}
+          className="w-full h-48 object-cover"
+        />
+      </div>
+    )}
+
     <div className="flex items-center gap-2 text-blue text-[0.68rem] font-bold tracking-[0.12em] uppercase mb-[0.9rem]">
       <span className="block w-5 h-px bg-blue" />
       {tag}
@@ -28,12 +51,12 @@ export const NewsCard = ({ tag, title, desc, date }: NewsCardProps) => (
 
     <div className="flex justify-between items-center pt-4 border-t border-border-light">
       <span className="text-text-muted text-[0.78rem]">{date}</span>
-      <Link
-        href="/#news"
-        className="text-blue text-[0.78rem] font-bold no-underline"
+      <button
+        onClick={onReadMore}
+        className="text-blue text-[0.78rem] font-bold no-underline hover:underline cursor-pointer"
       >
         قراءة المزيد ←
-      </Link>
+      </button>
     </div>
   </Card>
 );

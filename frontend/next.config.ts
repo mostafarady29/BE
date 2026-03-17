@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "media.istockphoto.com",
+        port: "",
+        pathname: "/**",
+      },
+      // Add other hostnames as needed
+    ],
+  },
 };
 
 export default nextConfig;

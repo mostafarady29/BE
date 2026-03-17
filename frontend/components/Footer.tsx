@@ -4,7 +4,7 @@ import { GEO_SVG } from "@/constants/colors";
 import Link from "next/link";
 
 export const Footer = () => (
-  <footer className="relative bg-navy pt-18 pb-8 overflow-hidden">
+  <footer className="relative bg-navy pt-18 pb-8 overflow-hidden" id="footer">
     {/* Top glow line */}
     <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-blue to-transparent" />
 
@@ -39,7 +39,7 @@ export const Footer = () => (
             { label: "من نحن", href: "/#about" },
             { label: "الخدمات", href: "/#services" },
             { label: "الأخبار", href: "/#news" },
-            { label: "تواصل معنا", href: "/#request-form" }
+            { label: "تواصل معنا", href: "/#request-form" },
           ].map((l, i) => (
             <div key={i} className="mb-[0.6rem]">
               <Link href={l.href} className="footer-link">

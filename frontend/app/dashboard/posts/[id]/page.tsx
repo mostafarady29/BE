@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, formatDate, statusBadge } from "@/lib/api";
 import { auth } from "@/lib/auth";
+import * as XLSX from "xlsx";
 
 export default function PostDetailPage() {
     const { id } = useParams();
@@ -19,6 +20,13 @@ export default function PostDetailPage() {
     const [newStatus, setNewStatus] = useState("");
     const [assignUser, setAssignUser] = useState("");
     const isAdmin = auth.isAdmin();
+
+    const statusArabic: any = {
+        "Pending": "قيد الانتظار",
+        "In Progress": "قيد التنفيذ",
+        "Resolved": "تم الحل",
+        "Rejected": "مرفوض"
+    };
 
     const loadData = async () => {
         try {
@@ -81,6 +89,232 @@ export default function PostDetailPage() {
         }
     };
 
+    // ─── Export to Excel ──────────────────────────────────────────────────────
+    const exportExcel = () => {
+        if (!post) return;
+
+        const rows = [
+            { "الحقل": "رقم الطلب", "القيمة": `#${post.id}` },
+            { "الحقل": "الاسم", "القيمة": `${post.first_name} ${post.last_name}` },
+            { "الحقل": "الرقم القومي", "القيمة": post.national_id },
+            { "الحقل": "رقم الهاتف", "القيمة": post.phone || "—" },
+            { "الحقل": "نوع المشكلة", "القيمة": post.problem_type },
+            { "الحقل": "المدينة", "القيمة": post.city },
+            { "الحقل": "الحالة", "القيمة": statusArabic[post.status_name] || post.status_name },
+            { "الحقل": "المسؤول", "القيمة": post.assigned_username || "—" },
+            { "الحقل": "تاريخ التقديم", "القيمة": formatDate(post.created_at) },
+            { "الحقل": "وصف المشكلة", "القيمة": post.problem_description },
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        // Set column widths
+        ws["!cols"] = [{ wch: 20 }, { wch: 50 }];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "تفاصيل الطلب");
+        XLSX.writeFile(wb, `طلب-${post.id}.xlsx`);
+    };
+
+    // ─── Export to PDF (print) ────────────────────────────────────────────────
+    const exportPDF = () => {
+        if (!post) return;
+
+        const statusLabel = statusArabic[post.status_name] || post.status_name;
+
+        const statusColors: any = {
+            "Pending": { bg: "#fef9c3", color: "#854d0e", border: "#fde047" },
+            "In Progress": { bg: "#dbeafe", color: "#1e40af", border: "#93c5fd" },
+            "Resolved": { bg: "#dcfce7", color: "#166534", border: "#86efac" },
+            "Rejected": { bg: "#fee2e2", color: "#991b1b", border: "#fca5a5" },
+        };
+        const sc = statusColors[post.status_name] || { bg: "#f1f5f9", color: "#475569", border: "#cbd5e1" };
+
+        const attachmentsList = post.attachments && post.attachments.length > 0
+            ? post.attachments.map((a: any) =>
+                `<li style="padding:4px 0;color:#334155;">
+                    ${a.file_type?.startsWith("image/") ? "🖼️" : "📄"}
+                    ${a.file_type?.toUpperCase() || "FILE"} — ${formatDate(a.uploaded_at)}
+                </li>`
+            ).join("")
+            : `<li style="color:#94a3b8;">لا توجد مرفقات</li>`;
+
+        const html = `
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8"/>
+    <title>طلب #${post.id}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            padding: 40px;
+            color: #1e293b;
+            background: #fff;
+            font-size: 13px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .header-title { font-size: 26px; font-weight: 800; color: #1e3a8a; }
+        .header-sub { font-size: 13px; color: #64748b; margin-top: 4px; }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 13px;
+            background: ${sc.bg};
+            color: ${sc.color};
+            border: 1px solid ${sc.border};
+        }
+
+        /* Sections */
+        .section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: #1e3a8a;
+            color: white;
+            padding: 10px 20px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+        }
+        .section-body { padding: 16px 20px; }
+
+        /* Rows */
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 9px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .row:last-child { border-bottom: none; }
+        .row-label { color: #64748b; font-weight: 600; flex-shrink: 0; width: 140px; }
+        .row-value { color: #0f172a; font-weight: 700; text-align: left; flex: 1; }
+
+        /* Description box */
+        .description-box {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            line-height: 1.8;
+            color: #1e293b;
+        }
+
+        /* Attachments */
+        .attachments-list { list-style: none; padding: 0; }
+        .attachments-list li { padding: 6px 0; border-bottom: 1px solid #e2e8f0; }
+        .attachments-list li:last-child { border-bottom: none; }
+
+        /* Footer */
+        .footer {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        @media print {
+            body { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="header-title">طلب #${post.id}</div>
+            <div class="header-sub">تاريخ التقديم: ${formatDate(post.created_at)}</div>
+        </div>
+        <div>
+            <span class="status-badge">${statusLabel}</span>
+        </div>
+    </div>
+
+    <!-- Citizen Info -->
+    <div class="section">
+        <div class="section-header">👤 بيانات المواطن</div>
+        <div class="section-body">
+            <div class="row">
+                <span class="row-label">الاسم الكامل</span>
+                <span class="row-value">${post.first_name} ${post.last_name}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">الرقم القومي</span>
+                <span class="row-value" style="font-family:monospace;letter-spacing:2px;font-size:12px;">${post.national_id}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">رقم الهاتف</span>
+                <span class="row-value">${post.phone || "—"}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Info -->
+    <div class="section">
+        <div class="section-header">📋 تفاصيل الطلب</div>
+        <div class="section-body">
+            <div class="row">
+                <span class="row-label">نوع المشكلة</span>
+                <span class="row-value">${post.problem_type}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">المدينة</span>
+                <span class="row-value">${post.city}</span>
+            </div>
+            <div class="row">
+                <span class="row-label">المسؤول</span>
+                <span class="row-value">${post.assigned_username || "—"}</span>
+            </div>
+            <div style="margin-top:12px;">
+                <div style="font-weight:700;color:#64748b;font-size:12px;margin-bottom:6px;">وصف المشكلة:</div>
+                <div class="description-box">${post.problem_description}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attachments -->
+    <div class="section">
+        <div class="section-header">📎 المرفقات (${post.attachments?.length || 0})</div>
+        <div class="section-body">
+            <ul class="attachments-list">${attachmentsList}</ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>تم إنشاء هذا المستند تلقائياً</span>
+        <span>طلب #${post.id} — ${formatDate(post.created_at)}</span>
+    </div>
+</body>
+</html>`;
+
+        const win = window.open("", "_blank");
+        if (!win) return;
+        win.document.write(html);
+        win.document.close();
+        win.onload = () => { win.focus(); win.print(); };
+    };
+
     if (loading) {
         return (
             <div className="flex h-[80vh] items-center justify-center">
@@ -91,7 +325,7 @@ export default function PostDetailPage() {
 
     if (error || !post) {
         return (
-            <div className="p-8 max-w-[1200px] mx-auto min-h-screen">
+            <div className="p-8 max-w-300 mx-auto min-h-screen">
                 <Link href="/dashboard/posts" className="inline-block mb-6 px-4 py-2 bg-white rounded-lg shadow-sm border border-border text-text-secondary hover:text-blue transition-colors">
                     ← عودة للطلبات
                 </Link>
@@ -103,7 +337,7 @@ export default function PostDetailPage() {
     }
 
     return (
-        <div className="p-8 max-w-[1400px] mx-auto min-h-screen" dir="rtl">
+        <div className="p-8 max-w-350 mx-auto min-h-screen" dir="rtl">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-4">
@@ -111,7 +345,34 @@ export default function PostDetailPage() {
                         ← رجوع
                     </Link>
                     <h1 className="text-3xl font-bold font-amiri text-navy">طلب #{post.id}</h1>
-                    <div dangerouslySetInnerHTML={{ __html: statusBadge(post.status_name) }} className="text-sm shadow-sm" />
+                    <div dangerouslySetInnerHTML={{ __html: statusBadge(post.status_name, statusArabic[post.status_name] || post.status_name) }} className="text-sm shadow-sm" />
+                </div>
+
+                {/* Export Buttons */}
+                <div className="flex gap-2">
+                    <button
+                        onClick={exportExcel}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm hover:bg-emerald-600 hover:text-white hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-200 hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                        Excel
+                    </button>
+                    <button
+                        onClick={exportPDF}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold text-sm hover:bg-rose-600 hover:text-white hover:border-rose-600 hover:shadow-lg hover:shadow-rose-200 hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        PDF
+                    </button>
                 </div>
             </div>
 
@@ -184,7 +445,7 @@ export default function PostDetailPage() {
                                     {post.attachments.map((a: any) => {
                                         const isImage = a.file_type && a.file_type.startsWith("image/");
                                         return (
-                                            <a
+                                            <Link
                                                 key={a.id}
                                                 href={a.file_url}
                                                 target="_blank"
@@ -200,7 +461,7 @@ export default function PostDetailPage() {
                                                 <div className="text-[0.65rem] text-text-muted">
                                                     {formatDate(a.uploaded_at)}
                                                 </div>
-                                            </a>
+                                            </Link>
                                         );
                                     })}
                                 </div>
@@ -227,7 +488,7 @@ export default function PostDetailPage() {
                                     className="w-full px-4 py-2.5 border border-border rounded-lg outline-none focus:border-blue bg-white text-right"
                                 >
                                     {statuses.map((s) => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                        <option key={s.id} value={s.id}>{statusArabic[s.name] || s.name}</option>
                                     ))}
                                 </select>
                             </div>
@@ -240,7 +501,7 @@ export default function PostDetailPage() {
                         </div>
                     </div>
 
-                    {/* Assign User (Admin only technically) */}
+                    {/* Assign User (Admin only) */}
                     {isAdmin && (
                         <div className="bg-white rounded-2xl shadow-blue-form border border-border overflow-hidden">
                             <div className="bg-gray-50/50 px-6 py-4 border-b border-border">
@@ -262,7 +523,7 @@ export default function PostDetailPage() {
                                 </div>
                                 <button
                                     onClick={handleAssign}
-                                    className="w-full bg-white text-navy border border-border py-2.5 rounded-lg font-bold hover:bg-gray-50  transition-colors text-sm"
+                                    className="w-full bg-white text-navy border border-border py-2.5 rounded-lg font-bold hover:bg-gray-50 transition-colors text-sm"
                                 >
                                     حفظ التعيين
                                 </button>

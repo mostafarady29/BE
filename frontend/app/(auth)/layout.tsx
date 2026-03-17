@@ -1,5 +1,4 @@
 import { Cairo, Amiri } from "next/font/google";
-import "./globals.css";
 
 const cairo = Cairo({
   subsets: ["arabic"],
@@ -14,7 +13,7 @@ const amiri = Amiri({
 });
 
 export const metadata = {
-  title: "النائب عادل النجار",
+  title: "تسجيل الدخول كموظف - النائب عادل النجار",
   description: "عضو مجلس الشعب - دائرة دسوق · فوه · مطوبس",
 };
 
@@ -24,8 +23,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${amiri.variable}`}>
-      <body>{children}</body>
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`${cairo.variable} ${amiri.variable}`}
+      suppressHydrationWarning
+    >
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

@@ -7,6 +7,44 @@ import { useState } from "react";
 
 const requestTypes = ["شكوى", "طلب مساعدة أو دعم", "اقتراح", "أخرى"];
 
+const cities = ["دسوق", "فوة", "مطوبس"];
+
+const ministries = [
+  "رئاسة مجلس الوزراء",
+  "وزارة الدفاع والإنتاج الحربى",
+  "وزارة الإنتاج الحربى",
+  "وزارة البترول والثروة المعدنية",
+  "وزارة الكهرباء والطاقة المتجددة",
+  "وزارة الخارجية",
+  "وزارة البيئة",
+  "وزارة الإتصالات وتكنولوجيا المعلومات",
+  "وزارة التربية والتعليم",
+  "وزارة القوى العاملة",
+  "وزارة العدل",
+  "وزارة التنمية المحلية",
+  "وزارة الإسكان والمرافق والمجتمعات العمرانية",
+  "وزارة الأوقاف",
+  "وزارة الداخلية",
+  "وزارة التجارة والصناعة",
+  "وزارة المالية",
+  "وزارة الطيران المدنى",
+  "وزارة النقل",
+  "وزارة الثقافة",
+  "وزارة الصحة والسكان",
+  "وزارة الموارد المائية والرى",
+  "وزارة الزراعة",
+  "وزارة التعاون الدولى",
+  "وزارة التخطيط والتنمية الإقتصادية",
+  "وزارة التعليم العالى والبحث العلمى",
+  "وزارة التموين والتجارة الداخلية",
+  "وزارة السياحة والآثار",
+  "وزارة الشباب والرياضة",
+  "وزارة شئون المجالس النيابية",
+  "وزارة التضامن الإجتماعى",
+  "وزارة الدولة للهجرة وشئون المصريين بالخارج",
+  "وزارة قطاع الأعمال العام",
+];
+
 const formSchema = z.object({
   fullName: z.string().min(3, "الاسم يجب أن يكون أكثر من 3 أحرف"),
   nationalId: z
@@ -15,13 +53,13 @@ const formSchema = z.object({
     .regex(/^\d+$/, "الرقم القومي يجب أن يحتوي على أرقام فقط"),
   mobile: z
     .string()
-    .regex(
-      /^01[0-9]{9}$/,
-      "رقم الموبايل غير صحيح (يجب أن يبدأ بـ 01 ويتكون من 11 رقمًا)",
-    ),
+    .regex(/^01[0-9]{9}$/, "رقم الموبايل غير صحيح (يجب أن يبدأ بـ 01 ويتكون من 11 رقمًا)"),
+  city: z.string().min(1, "يرجى اختيار المركز"),
+  ministry: z.string().min(1, "يرجى اختيار الوزارة"),
   requestType: z.string().min(1, "يرجى اختيار نوع الطلب"),
   description: z.string().min(10, "وصف المشكلة يجب أن يكون أكثر من 10 أحرف"),
 });
+
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -29,6 +67,8 @@ const ICONS: Record<string, string> = {
   fullName: "👤",
   nationalId: "🪪",
   mobile: "📱",
+  city: "📍",
+  ministry: "🏛️",
   requestType: "📋",
   description: "✍️",
   file: "📎",
@@ -98,6 +138,8 @@ export const RequestForm = () => {
       fullName: "",
       nationalId: "",
       mobile: "",
+      city: "",
+      ministry: "",
       requestType: "",
       description: "",
     },
@@ -120,9 +162,10 @@ export const RequestForm = () => {
           first_name,
           last_name,
           phone: data.mobile,
+          city: data.city,
+          ministry: data.ministry,
           problem_type: data.requestType,
           problem_description: data.description,
-          city: "دسوق",
         }),
       });
 
@@ -259,6 +302,7 @@ export const RequestForm = () => {
                 />
               </FieldWrapper>
 
+
               <FieldWrapper
                 label="نوع الطلب"
                 icon={ICONS.requestType}
@@ -280,6 +324,51 @@ export const RequestForm = () => {
                     <option key={type} value={type}>
                       {type}
                     </option>
+                  ))}
+                </select>
+              </FieldWrapper>
+            </div>
+
+            {/* Row 3 — City & Ministry */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <FieldWrapper
+                label="المركز"
+                icon={ICONS.city}
+                error={errors.city?.message}
+              >
+                <select
+                  {...register("city")}
+                  className={`${inputCls(!!errors.city)} cursor-pointer appearance-none pl-10`}
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "left 1rem center",
+                  }}
+                >
+                  <option value="" disabled>اختر المركز</option>
+                  {cities.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </FieldWrapper>
+
+              <FieldWrapper
+                label="الوزارة المعنية"
+                icon={ICONS.ministry}
+                error={errors.ministry?.message}
+              >
+                <select
+                  {...register("ministry")}
+                  className={`${inputCls(!!errors.ministry)} cursor-pointer appearance-none pl-10`}
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "left 1rem center",
+                  }}
+                >
+                  <option value="" disabled>اختر الوزارة</option>
+                  {ministries.map((m) => (
+                    <option key={m} value={m}>{m}</option>
                   ))}
                 </select>
               </FieldWrapper>
