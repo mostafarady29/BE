@@ -4,16 +4,26 @@ const { generatePresignedUploadUrl, deleteFile } = require('../config/s3');
 // POST /api/posts/:id/attachments/presign
 const presign = async (req, res, next) => {
     try {
+        // Check if S3 is actually configured
+        const keyId = process.env.AWS_ACCESS_KEY_ID || '';
+        const secret = process.env.AWS_SECRET_ACCESS_KEY || '';
+        if (!keyId || keyId === 'your_access_key_id' || !secret || secret === 'your_secret_access_key') {
+            return res.status(503).json({
+                success: false,
+                message: 'خدمة رفع الملفات غير متاحة حالياً. يرجى التواصل مع المسؤول.',
+            });
+        }
+
         const postId = parseInt(req.params.id);
         const { file_name, content_type } = req.body;
 
         if (!content_type) {
-            return res.status(400).json({ success: false, message: 'content_type is required.' });
+            return res.status(400).json({ success: false, message: 'نوع الملف مطلوب.' });
         }
 
         // Verify post exists
         const { rows } = await db.query('SELECT id FROM posts WHERE id = $1', [postId]);
-        if (!rows.length) return res.status(404).json({ success: false, message: 'Post not found.' });
+        if (!rows.length) return res.status(404).json({ success: false, message: 'الطلب غير موجود.' });
 
         const { uploadUrl, fileKey, fileUrl } = await generatePresignedUploadUrl(postId, content_type);
 
@@ -26,7 +36,7 @@ const presign = async (req, res, next) => {
 
         res.json({
             success: true,
-            message: 'Presigned URL generated. Upload via HTTP PUT to uploadUrl.',
+            message: 'تم توليد رابط الرفع بنجاح.',
             data: {
                 attachment_id: insert.rows[0].id,
                 uploadUrl,
@@ -37,11 +47,12 @@ const presign = async (req, res, next) => {
         });
     } catch (err) {
         if (err.message.includes('not allowed')) {
-            return res.status(415).json({ success: false, message: err.message });
+            return res.status(415).json({ success: false, message: 'نوع الملف غير مسموح به.' });
         }
         next(err);
     }
 };
+
 
 // GET /api/posts/:id/attachments
 const list = async (req, res, next) => {
