@@ -319,7 +319,7 @@ export default function OldRequestsPage() {
         const all = await fetchAll();
         const rows = all.map(p => ({
             "#": p.id,
-            "المواطن": p.citizen_name,
+            "الاسم": p.citizen_name,
             "الرقم القومي": p.national_id,
             "الموبايل": p.phone || "—",
             "نوع الطلب": p.problem_type,
@@ -330,24 +330,42 @@ export default function OldRequestsPage() {
             "ملاحظات": p.notes || "—",
         }));
         const ws = XLSX.utils.json_to_sheet(rows);
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 6 }, { wch: 22 }, { wch: 18 }, { wch: 14 },
+            { wch: 16 }, { wch: 30 }, { wch: 10 },
+            { wch: 14 }, { wch: 14 }, { wch: 30 },
+        ];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "الطلبات القديمة");
-        XLSX.writeFile(wb, "الطلبات_القديمة.xlsx");
+        XLSX.writeFile(wb, `الطلبات_القديمة_${new Date().toLocaleDateString("ar-EG").replace(/\//g, "-")}.xlsx`);
     };
 
     const exportPDF = async () => {
         const all = await fetchAll();
-        const rows = all.map(p => `
-            <tr>
-                <td>#${p.id}</td>
-                <td>${p.citizen_name}</td>
-                <td style="font-family:monospace">${p.national_id}</td>
+        const today = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+        const statusColors: Record<string, string> = {
+            "قيد الانتظار": "#b45309",
+            "قيد التنفيذ": "#1d4ed8",
+            "تم الحل": "#15803d",
+            "مرفوض": "#dc2626",
+        };
+        const rows = all.map((p, i) => {
+            const statusLabel = statusArabic[p.status] || p.status || "—";
+            const statusColor = statusColors[statusLabel] || "#374151";
+            return `<tr>
+                <td style="text-align:center;font-weight:600">${i + 1}</td>
+                <td style="font-weight:600">${p.citizen_name}</td>
+                <td style="font-family:monospace;font-size:11px;letter-spacing:1px">${p.national_id}</td>
+                <td>${p.phone || "—"}</td>
                 <td>${p.problem_type}</td>
-                <td>${p.ministry || "—"}</td>
+                <td style="font-size:11px">${p.ministry || "—"}</td>
                 <td>${p.city}</td>
-                <td>${statusArabic[p.status] || p.status || "—"}</td>
-                <td>${p.request_date ? new Date(p.request_date).toLocaleDateString("ar-EG") : "—"}</td>
-            </tr>`).join("");
+                <td><span style="color:${statusColor};font-weight:700;font-size:11px">${statusLabel}</span></td>
+                <td style="font-size:11px">${p.request_date ? new Date(p.request_date).toLocaleDateString("ar-EG") : "—"}</td>
+                <td style="font-size:11px;color:#64748b">${p.notes || "—"}</td>
+            </tr>`;
+        }).join("");
 
         const win = window.open("", "_blank");
         if (!win) return;
@@ -355,24 +373,56 @@ export default function OldRequestsPage() {
             <!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"/>
             <title>الطلبات القديمة</title>
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+                @page { size: A4 landscape; margin: 15mm; }
                 * { margin:0; padding:0; box-sizing:border-box; }
-                body { font-family:'Cairo',sans-serif; direction:rtl; padding:32px; color:#1e293b; }
-                h1 { font-size:22px; font-weight:700; margin-bottom:6px; color:#1e3a8a; }
-                p { font-size:13px; color:#64748b; margin-bottom:20px; }
-                table { width:100%; border-collapse:collapse; font-size:12px; }
-                thead { background:#1e3a8a; color:white; }
-                th { padding:10px 12px; text-align:right; font-weight:600; }
-                td { padding:9px 12px; border-bottom:1px solid #e2e8f0; }
-                tr:nth-child(even) { background:#f8fafc; }
+                body { font-family:'Cairo',sans-serif; direction:rtl; color:#1e293b; background:white; }
+                .header { display:flex; justify-content:space-between; align-items:center;
+                          padding:16px 0 12px; border-bottom:3px solid #1e3a8a; margin-bottom:16px; }
+                .header-title h1 { font-size:20px; font-weight:900; color:#1e3a8a; }
+                .header-title p { font-size:12px; color:#64748b; margin-top:2px; }
+                .header-meta { text-align:left; font-size:11px; color:#64748b; }
+                .header-meta strong { font-size:13px; color:#1e293b; }
+                .stats { display:flex; gap:12px; margin-bottom:14px; }
+                .stat { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px;
+                        padding:8px 16px; text-align:center; }
+                .stat-num { font-size:20px; font-weight:900; color:#1e3a8a; }
+                .stat-lbl { font-size:10px; color:#64748b; }
+                table { width:100%; border-collapse:collapse; font-size:11px; }
+                thead tr { background:#1e3a8a; color:white; }
+                th { padding:8px 10px; text-align:right; font-weight:700; white-space:nowrap; }
+                td { padding:7px 10px; border-bottom:1px solid #e2e8f0; vertical-align:middle; }
+                tr:nth-child(even) td { background:#f8fafc; }
+                tr:hover td { background:#eff6ff; }
+                .footer { margin-top:14px; text-align:center; font-size:10px; color:#94a3b8;
+                           border-top:1px solid #e2e8f0; padding-top:8px; }
+                @media print { .no-print { display:none; } }
             </style></head><body>
-            <h1>الطلبات القديمة</h1>
-            <p>إجمالي الطلبات: ${all.length}</p>
-            <table><thead><tr>
-                <th>#</th><th>المواطن</th><th>الرقم القومي</th>
-                <th>نوع الطلب</th><th>الوزارة</th><th>المركز</th>
-                <th>الحالة</th><th>تاريخ الطلب</th>
-            </tr></thead><tbody>${rows}</tbody></table>
+            <div class="header">
+                <div class="header-title">
+                    <h1>🏛️ الطلبات القديمة</h1>
+                    <p>أرشيف طلبات المواطنين — مكتب النائب</p>
+                </div>
+                <div class="header-meta">
+                    <div>تاريخ الطباعة</div>
+                    <strong>${today}</strong>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat"><div class="stat-num">${all.length}</div><div class="stat-lbl">إجمالي الطلبات</div></div>
+                <div class="stat"><div class="stat-num">${all.filter(p => (statusArabic[p.status] || p.status) === 'تم الحل').length}</div><div class="stat-lbl">تم الحل</div></div>
+                <div class="stat"><div class="stat-num">${all.filter(p => (statusArabic[p.status] || p.status) === 'قيد الانتظار').length}</div><div class="stat-lbl">قيد الانتظار</div></div>
+                <div class="stat"><div class="stat-num">${all.filter(p => (statusArabic[p.status] || p.status) === 'قيد التنفيذ').length}</div><div class="stat-lbl">قيد التنفيذ</div></div>
+            </div>
+            <table>
+                <thead><tr>
+                    <th>#</th><th>الاسم</th><th>الرقم القومي</th><th>الموبايل</th>
+                    <th>نوع الطلب</th><th>الوزارة</th><th>المركز</th>
+                    <th>الحالة</th><th>تاريخ الطلب</th><th>ملاحظات</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="footer">تم إنشاء هذا التقرير بتاريخ ${today} — نظام إدارة طلبات المواطنين</div>
             </body></html>`);
         win.document.close();
         win.onload = () => { win.focus(); win.print(); };

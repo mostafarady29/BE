@@ -5,7 +5,14 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 
-// Map status to styling classes
+// Map status to styling classes and Arabic labels
+const statusArabic: Record<string, string> = {
+  Pending: "قيد الانتظار",
+  "In Progress": "قيد التنفيذ",
+  Resolved: "تم الحل",
+  Rejected: "مرفوض",
+};
+
 function getStatusBadge(status: string) {
   const map: Record<string, string> = {
     Pending: "bg-yellow-100 text-yellow-800",
@@ -14,12 +21,14 @@ function getStatusBadge(status: string) {
     Rejected: "bg-red-100 text-red-800",
   };
   const cls = map[status] || "bg-gray-100 text-gray-800";
+  const label = statusArabic[status] || status;
   return (
-    <span className={`px-2 py-1 rounded text-xs font-semibold ${cls}`}>
-      {status}
+    <span className={`px-3 py-1 rounded-full text-xs font-bold ${cls}`}>
+      {label}
     </span>
   );
 }
+
 
 export default function TrackPage() {
   const [nid, setNid] = useState("");
