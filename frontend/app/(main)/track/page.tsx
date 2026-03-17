@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 // Map status to styling classes and Arabic labels
 const statusArabic: Record<string, string> = {
@@ -48,14 +49,12 @@ export default function TrackPage() {
     setPost(null);
 
     try {
-      const res = await fetch("/api/posts/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ national_id: nid, post_id: parseInt(pid) }),
+      const json = await api.post("/posts/track", {
+        national_id: nid,
+        post_id: parseInt(pid),
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
+      if (!json.success) {
         throw new Error(json.message || "حدث خطأ. حاول مجدداً.");
       }
 

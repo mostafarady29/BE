@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
+import { api } from "@/lib/api";
 
 const requestTypes = ["شكوى", "طلب مساعدة أو دعم", "اقتراح", "أخرى"];
 
@@ -154,24 +155,18 @@ export const RequestForm = () => {
       const first_name = nameParts[0] ?? data.fullName;
       const last_name = nameParts.slice(1).join(" ") || first_name;
 
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          national_id: data.nationalId,
-          first_name,
-          last_name,
-          phone: data.mobile,
-          city: data.city,
-          ministry: data.ministry,
-          problem_type: data.requestType,
-          problem_description: data.description,
-        }),
+      const json = await api.post("/posts", {
+        national_id: data.nationalId,
+        first_name,
+        last_name,
+        phone: data.mobile,
+        city: data.city,
+        ministry: data.ministry,
+        problem_type: data.requestType,
+        problem_description: data.description,
       });
 
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
+      if (!json.success) {
         const msg =
           json?.errors?.[0]?.msg ||
           json?.message ||

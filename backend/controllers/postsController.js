@@ -28,7 +28,7 @@ const submit = async (req, res, next) => {
         // Get default "Pending" status
         const statusResult = await client.query("SELECT id FROM statuses WHERE name = 'Pending' LIMIT 1");
         const statusId = statusResult.rows[0]?.id;
-        throw new Error('لم يتم العثور على حالة الانتظار الافتراضي. تأكد من تشغيل ملف seed.sql أولاً.');
+        if (!statusId) throw new Error('لم يتم العثور على حالة الانتظار الافتراضي. تأكد من تشغيل ملف seed.sql أولاً.');
 
         // Create post
         const postResult = await client.query(
@@ -42,7 +42,7 @@ const submit = async (req, res, next) => {
 
         res.status(201).json({
             success: true,
-            message: 'Your request has been submitted successfully.',
+            message: 'تم تقديم طلبك بنجاح.',
             data: {
                 post_id: postResult.rows[0].id,
                 created_at: postResult.rows[0].created_at,
