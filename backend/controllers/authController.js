@@ -18,14 +18,14 @@ const login = async (req, res, next) => {
         );
 
         if (!rows.length) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+            return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة.' });
         }
 
         const user = rows[0];
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+            return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة.' });
         }
 
         const token = jwt.sign(
@@ -36,7 +36,7 @@ const login = async (req, res, next) => {
 
         res.json({
             success: true,
-            message: 'Login successful.',
+            message: 'تم تسجيل الدخول بنجاح.',
             token,
             user: { id: user.id, username: user.username, role: user.role, phone: user.phone },
         });
@@ -56,15 +56,15 @@ const changePassword = async (req, res, next) => {
         const userId = req.user.id;
 
         const { rows } = await db.query('SELECT password FROM users WHERE id = $1', [userId]);
-        if (!rows.length) return res.status(404).json({ success: false, message: 'User not found.' });
+        if (!rows.length) return res.status(404).json({ success: false, message: 'المستخدم غير موجود.' });
 
         const match = await bcrypt.compare(currentPassword, rows[0].password);
-        if (!match) return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
+        if (!match) return res.status(401).json({ success: false, message: 'كلمة المرور الحالية غير صحيحة.' });
 
         const hashed = await bcrypt.hash(newPassword, 10);
         await db.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, userId]);
 
-        res.json({ success: true, message: 'Password updated successfully.' });
+        res.json({ success: true, message: 'تم تحديث كلمة المرور بنجاح.' });
     } catch (err) {
         next(err);
     }

@@ -28,7 +28,7 @@ const submit = async (req, res, next) => {
         // Get default "Pending" status
         const statusResult = await client.query("SELECT id FROM statuses WHERE name = 'Pending' LIMIT 1");
         const statusId = statusResult.rows[0]?.id;
-        if (!statusId) throw new Error('Default status "Pending" not found. Run seed.sql first.');
+        throw new Error('لم يتم العثور على حالة الانتظار الافتراضي. تأكد من تشغيل ملف seed.sql أولاً.');
 
         // Create post
         const postResult = await client.query(
@@ -138,8 +138,8 @@ const updateStatus = async (req, res, next) => {
        RETURNING id, status_id`,
             [status_id, req.params.id]
         );
-        if (!rows.length) return res.status(404).json({ success: false, message: 'Post not found.' });
-        res.json({ success: true, message: 'Status updated.', data: rows[0] });
+        if (!rows.length) return res.status(404).json({ success: false, message: 'الطلب غير موجود.' });
+        res.json({ success: true, message: 'تم تحديث الحالة.', data: rows[0] });
     } catch (err) { next(err); }
 };
 
@@ -152,8 +152,8 @@ const assign = async (req, res, next) => {
        RETURNING id, assigned_to`,
             [assigned_to ?? null, req.params.id]
         );
-        if (!rows.length) return res.status(404).json({ success: false, message: 'Post not found.' });
-        res.json({ success: true, message: 'Post assigned.', data: rows[0] });
+        if (!rows.length) return res.status(404).json({ success: false, message: 'الطلب غير موجود.' });
+        res.json({ success: true, message: 'تم تعيين المسؤول.', data: rows[0] });
     } catch (err) { next(err); }
 };
 
@@ -161,8 +161,8 @@ const assign = async (req, res, next) => {
 const remove = async (req, res, next) => {
     try {
         const { rows } = await db.query('DELETE FROM posts WHERE id = $1 RETURNING id', [req.params.id]);
-        if (!rows.length) return res.status(404).json({ success: false, message: 'Post not found.' });
-        res.json({ success: true, message: 'Post deleted.' });
+        if (!rows.length) return res.status(404).json({ success: false, message: 'الطلب غير موجود.' });
+        res.json({ success: true, message: 'تم حذف الطلب.' });
     } catch (err) { next(err); }
 };
 
@@ -171,7 +171,7 @@ const track = async (req, res, next) => {
     try {
         const { national_id, post_id } = req.body;
         if (!national_id || !post_id) {
-            return res.status(400).json({ success: false, message: 'national_id and post_id are required.' });
+            return res.status(400).json({ success: false, message: 'الرقم القومي ورقم الطلب مطلوبان.' });
         }
 
         const { rows } = await db.query(
