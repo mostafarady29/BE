@@ -79,3 +79,21 @@ CREATE INDEX idx_posts_created_at  ON posts(created_at DESC);
 CREATE INDEX idx_posts_city        ON posts(city);
 CREATE INDEX idx_attachments_post  ON attachments(post_id);
 CREATE INDEX idx_people_national   ON people(national_id);
+
+-- 6. News Articles
+DROP TABLE IF EXISTS news CASCADE;
+CREATE TABLE news (
+    id           SERIAL          PRIMARY KEY,
+    title        VARCHAR(255)    NOT NULL,
+    content      TEXT            NOT NULL,
+    tag          VARCHAR(100),
+    image_url    VARCHAR(500),
+    is_published BOOLEAN         NOT NULL DEFAULT FALSE,
+    is_featured  BOOLEAN         NOT NULL DEFAULT FALSE,
+    created_by   INT             REFERENCES users(id) ON DELETE SET NULL,
+    created_at   TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_news_is_published ON news(is_published);
+CREATE INDEX idx_news_created_at   ON news(created_at DESC);
+

@@ -9,6 +9,7 @@ const usersRoutes = require('./routes/users');
 const citizensRoutes = require('./routes/citizens');
 const statusesRoutes = require('./routes/statuses');
 const postsRoutes = require('./routes/posts');
+const newsRoutes = require('./routes/news');
 const attachmentsRoutes = require('./routes/attachments');
 const dashboardRoutes = require('./routes/dashboard');
 const errorHandler = require('./middleware/errorHandler');
@@ -67,7 +68,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/citizens', citizensRoutes);
 app.use('/api/statuses', statusesRoutes);
 app.use('/api/posts', postsRoutes);
-app.use('/api/news', postsRoutes); // Alias for frontend compatibility
+app.use('/api/news', newsRoutes); // Dedicated news route
 app.use('/api', attachmentsRoutes);  // /api/posts/:id/attachments & /api/attachments/:id
 app.use('/api/dashboard', dashboardRoutes);
 
