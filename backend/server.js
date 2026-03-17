@@ -18,18 +18,26 @@ const app = express();
 // ─── Security Middleware ───────────────────────────────────────────────────────
 app.use(helmet());
 
+app.set('trust proxy', 1);
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['http://localhost:3000', 'http://127.0.0.1:5500'];
+    : ['http://localhost:3000', 'http://127.0.0.1:5500', 'http://localhost:5173'];
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (curl, Postman) OR from file:// (origin === 'null' string)
-        if (!origin || origin === 'null' || allowedOrigins.includes(origin)) return callback(null, true);
+        if (!origin || origin === 'null') return callback(null, true);
+
+        // Allow all vercel.app subdomains and any specifically whitelisted origins
+        if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
         callback(new Error('Not allowed by CORS'));
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Forwarded-For'],
     credentials: true,
 }));
 
