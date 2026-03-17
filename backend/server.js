@@ -67,6 +67,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/citizens', citizensRoutes);
 app.use('/api/statuses', statusesRoutes);
 app.use('/api/posts', postsRoutes);
+app.use('/api/news', postsRoutes); // Alias for frontend compatibility
 app.use('/api', attachmentsRoutes);  // /api/posts/:id/attachments & /api/attachments/:id
 app.use('/api/dashboard', dashboardRoutes);
 
