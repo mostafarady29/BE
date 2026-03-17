@@ -97,3 +97,35 @@ CREATE TABLE news (
 CREATE INDEX idx_news_is_published ON news(is_published);
 CREATE INDEX idx_news_created_at   ON news(created_at DESC);
 
+-- 7. Old Requests (Archive — manually entered by staff)
+DROP TABLE IF EXISTS old_request_attachments CASCADE;
+DROP TABLE IF EXISTS old_requests CASCADE;
+CREATE TABLE old_requests (
+    id             SERIAL          PRIMARY KEY,
+    citizen_name   VARCHAR(200)    NOT NULL,
+    national_id    VARCHAR(20)     NOT NULL,
+    phone          VARCHAR(20),
+    problem_type   VARCHAR(100)    NOT NULL,
+    ministry       VARCHAR(200),
+    city           VARCHAR(100)    NOT NULL,
+    notes          TEXT,
+    status_id      INT             REFERENCES statuses(id) ON DELETE SET NULL,
+    request_date   DATE,
+    created_by     INT             REFERENCES users(id) ON DELETE SET NULL,
+    created_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE old_request_attachments (
+    id          SERIAL          PRIMARY KEY,
+    request_id  INT             NOT NULL
+                                REFERENCES old_requests(id) ON DELETE CASCADE,
+    file_url    VARCHAR(500)    NOT NULL,
+    file_key    VARCHAR(500),
+    file_type   VARCHAR(50),
+    uploaded_at TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_old_requests_national_id ON old_requests(national_id);
+CREATE INDEX idx_old_requests_status_id   ON old_requests(status_id);
+CREATE INDEX idx_old_requests_created_at  ON old_requests(created_at DESC);
+CREATE INDEX idx_old_req_att_req_id       ON old_request_attachments(request_id);
