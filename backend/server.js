@@ -59,6 +59,9 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+    res.json({ success: true, message: 'MP System API is running', healthCheck: '/api/health' });
+});
 app.get('/api/health', (req, res) => {
     res.json({ success: true, message: 'MP System API is running', timestamp: new Date().toISOString() });
 });
